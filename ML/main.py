@@ -7,9 +7,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import Literal
 
-print("🔍 Debugging Model Loading...")
-print(f"📍 Current directory: {os.getcwd()}")
-print(f"📂 Contents: {os.listdir('.')}")
+print("Debugging Model Loading...")
+print(f"Current directory: {os.getcwd()}")
+print(f"Contents: {os.listdir('.')}")
 
 # Check data directory
 if os.path.exists('data'):

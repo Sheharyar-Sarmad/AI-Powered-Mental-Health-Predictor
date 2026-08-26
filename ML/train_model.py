@@ -9,18 +9,18 @@ from sklearn.impute import SimpleImputer
 import joblib
 import os
 
-print("🔍 Training Mental Health Score Model...")
+print("Training Mental Health Score Model...")
 
 # Load data
 data_path = "./data/raw/Student Social Media And Mental Health Impact.csv"
 if not os.path.exists(data_path):
-    print(f"❌ Data not found at: {data_path}")
-    print("📍 Current directory:", os.getcwd())
-    print("📂 Contents:", os.listdir('.'))
+    print(f"Data not found at: {data_path}")
+    print("Current directory:", os.getcwd())
+    print("Contents:", os.listdir('.'))
     exit(1)
 
 data = pd.read_csv(data_path)
-print(f"✅ Data loaded: {data.shape[0]} rows, {data.shape[1]} columns")
+print(f"Data loaded: {data.shape[0]} rows, {data.shape[1]} columns")
 
 # Prepare features and target
 X = data.drop('Mental_Health_Score', axis=1)
@@ -55,15 +55,15 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 model.fit(X_train, y_train)
 
 score = model.score(X_test, y_test)
-print(f"✅ Model trained! R² Score: {score:.4f}")
+print(f"Model trained! R² Score: {score:.4f}")
 
 # Save model
 model_dir = "./data/models"
 os.makedirs(model_dir, exist_ok=True)
 model_path = f"{model_dir}/Mental_Health_Score_Model.pkl"
 joblib.dump(model, model_path)
-print(f"✅ Model saved to: {model_path}")
+print(f"Model saved to: {model_path}")
 
 # Verify model can be loaded
 test_model = joblib.load(model_path)
-print("✅ Model verification successful!")
+print("Model verification successful!")
