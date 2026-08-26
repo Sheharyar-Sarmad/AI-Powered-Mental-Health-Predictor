@@ -1,20 +1,51 @@
 import joblib
 import pandas as pd
 import os
+import sys
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import Literal
 
-# Load model
-try:
-    model = joblib.load("./data/models/Mental_Health_Score_Model.pkl")
-    print("✅ Model loaded successfully!")
-except Exception as e:
-    print(f"❌ Error loading model: {e}")
-    model = None
+# Debug: Print current working directory and all files
+print(f"🔍 Current working directory: {os.getcwd()}")
+print(f"🔍 Contents of current directory: {os.listdir('.')}")
 
-# Top countries list with "Other" included
+# Check if ML directory exists
+if os.path.exists('ML'):
+    print(f"Contents of ML: {os.listdir('ML')}")
+    if os.path.exists('ML/data'):
+        print(f"Contents of ML/data: {os.listdir('ML/data')}")
+        if os.path.exists('ML/data/models'):
+            print(f"Contents of ML/data/models: {os.listdir('ML/data/models')}")
+
+# Try multiple paths
+model = None
+model_paths = [
+    "./data/models/Mental_Health_Score_Model.pkl",
+    "./ML/data/models/Mental_Health_Score_Model.pkl",
+    "data/models/Mental_Health_Score_Model.pkl",
+    "ML/data/models/Mental_Health_Score_Model.pkl",
+    "/opt/render/project/src/ML/data/models/Mental_Health_Score_Model.pkl",
+    "/opt/render/project/src/data/models/Mental_Health_Score_Model.pkl",
+]
+
+print("🔍 Searching for model file...")
+for path in model_paths:
+    print(f"  Checking: {path}")
+    if os.path.exists(path):
+        try:
+            model = joblib.load(path)
+            print(f"✅ Model loaded successfully from: {path}")
+            break
+        except Exception as e:
+            print(f"❌ Error loading from {path}: {e}")
+    else:
+        print(f"❌ File not found at: {path}")
+
+if model is None:
+    print("❌ ERROR: Model could not be loaded from any path!")
+
 top_countries = ['Other', 'India', 'USA', 'Canada', 'Australia', 'UK', 'Germany', 'Mexico', 'Turkey', 'France']
 
 app = FastAPI(title="Mental Health Predictor API")
@@ -74,7 +105,9 @@ def health_check():
         'status': 'healthy' if model else 'unhealthy',
         'model_loaded': model is not None,
         'model_type': str(type(model)) if model else 'None',
-        'version': '1.0.0'
+        'version': '1.0.0',
+        'cwd': os.getcwd(),
+        'files': os.listdir('.')[:10]
     }
 
 @app.get('/')
@@ -84,10 +117,9 @@ def greet():
 @app.post('/predict', response_model=PredictionResponse)
 def predict(data: StudentData):
     if model is None:
-        raise HTTPException(status_code=503, detail="Model not loaded")
+        raise HTTPException(status_code=503, detail="Model not loaded. Please check logs.")
     
     try:
-        # Check if country is in top_countries list, else use "Other"
         country_group = data.country if data.country in top_countries else "Other"
 
         input_row = pd.DataFrame([{
