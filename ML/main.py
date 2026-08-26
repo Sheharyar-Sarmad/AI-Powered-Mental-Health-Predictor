@@ -1,5 +1,6 @@
 import joblib
 import pandas as pd
+import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -8,12 +9,13 @@ from typing import Literal
 # Load model
 try:
     model = joblib.load("./data/models/Mental_Health_Score_Model.pkl")
-    print("Model loaded successfully!")
+    print("✅ Model loaded successfully!")
 except Exception as e:
-    print(f"Error loading model: {e}")
+    print(f"❌ Error loading model: {e}")
     model = None
 
-top_countries = ['Other','India','USA','Canada','Australia','UK','Germany','Mexico','Turkey','France']
+# Top countries list with "Other" included
+top_countries = ['Other', 'India', 'USA', 'Canada', 'Australia', 'UK', 'Germany', 'Mexico', 'Turkey', 'France']
 
 app = FastAPI(title="Mental Health Predictor API")
 
@@ -85,6 +87,7 @@ def predict(data: StudentData):
         raise HTTPException(status_code=503, detail="Model not loaded")
     
     try:
+        # Check if country is in top_countries list, else use "Other"
         country_group = data.country if data.country in top_countries else "Other"
 
         input_row = pd.DataFrame([{
@@ -118,4 +121,5 @@ def predict(data: StudentData):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000, reload=True)
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
