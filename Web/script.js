@@ -1,8 +1,28 @@
 (() => {
     "use strict";
 
-    const API_BASE = "https://ai-powered-mental-health-predictor.onrender.com";
+    // =========================================================
+    // CONFIGURATION - Read from .env
+    // =========================================================
+    // Note: In production, these should be set via environment variables
+    // For now, we'll use defaults or you can replace with your actual values
+    const CONFIG = {
+        // Mental Health Predictor API
+        API_BASE: "https://ai-powered-mental-health-predictor.onrender.com",
+        // GROQ API for chat/insights
+        GROQ_API_KEY: "", // Add your GROQ API key here or from .env
+        GROQ_API_URL: "https://api.groq.com/openai/v1/chat/completions",
+        GROQ_MODEL: "mixtral-8x7b-32768",
+    };
 
+    // Try to load from .env (if running in Node/with bundler)
+    // For browser, we'll use a fallback or you can set manually above
+    if (typeof process !== 'undefined' && process.env) {
+        CONFIG.API_BASE = process.env.API_BASE || CONFIG.API_BASE;
+        CONFIG.GROQ_API_KEY = process.env.GROQ_API_KEY || CONFIG.GROQ_API_KEY;
+    }
+
+    // DOM Elements
     const form = document.getElementById("predict-form");
     const submitBtn = document.getElementById("submit-btn");
     const resetBtn = document.getElementById("reset-btn");
@@ -21,6 +41,13 @@
     const errorCopyEl = document.getElementById("error-copy");
     const progressBar = document.getElementById("progress-bar");
     const factorsCanvas = document.getElementById("factors-chart");
+    const chatContainer = document.getElementById("chat-container");
+    const chatToggleBtn = document.getElementById("chat-toggle-btn");
+    const chatCloseBtn = document.getElementById("chat-close-btn");
+    const chatMessages = document.getElementById("chat-messages");
+    const chatInput = document.getElementById("chat-input");
+    const chatSendBtn = document.getElementById("chat-send-btn");
+    const suggestionChips = document.querySelectorAll(".suggestion-chip");
 
     const GAUGE_ARC_LENGTH = 314;
     const hasGSAP = typeof window.gsap !== "undefined";
@@ -29,6 +56,10 @@
     // Respect users who've asked for less motion
     const prefersReducedMotion = window.matchMedia &&
         window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // Store the latest payload and score for chat context
+    let latestPayload = null;
+    let latestScore = null;
 
     // =========================================================
     // Particles
@@ -297,8 +328,6 @@
 
     const STRESS_TO_SCORE = { "Low": 9, "Medium": 6, "High": 3.5, "Very High": 1.5 };
 
-    // Normalize each raw input into a rough 0-10 "healthy direction" score
-    // so they can share one radar axis. This is illustrative, not clinical.
     function computeFactorScores(payload) {
         const sleep = clamp10(scaleTriangular(payload.sleep_hours_per_night, 0, 8, 10));
         const activity = clamp10((payload.physical_activity_hours / 2) * 10);
@@ -324,8 +353,6 @@
         return Math.round(n * 10) / 10;
     }
 
-    // Peaks at `ideal`, tapers off toward 0 at min/max — used for sleep,
-    // where both too little and (rarely) too much reduce the score.
     function scaleTriangular(value, min, ideal, max) {
         if (Number.isNaN(value)) return 0;
         if (value <= min) return 0;
@@ -337,20 +364,36 @@
     }
 
     function renderFactorsChart(payload) {
-        if (!hasChart || !factorsCanvas) return;
+        if (!hasChart || !factorsCanvas) {
+            console.warn("Chart.js not loaded or canvas missing");
+            return;
+        }
+
         const factors = computeFactorScores(payload);
         const labels = Object.keys(factors);
         const values = Object.values(factors);
 
         if (factorsChartInstance) {
             factorsChartInstance.destroy();
+            factorsChartInstance = null;
         }
 
         const ctx = factorsCanvas.getContext("2d");
+        
+        // Ensure canvas has proper dimensions
+        const parent = factorsCanvas.parentElement;
+        if (parent) {
+            const rect = parent.getBoundingClientRect();
+            if (rect.width > 0) {
+                factorsCanvas.width = rect.width * 0.9;
+                factorsCanvas.height = rect.height * 0.9;
+            }
+        }
+
         factorsChartInstance = new Chart(ctx, {
             type: "radar",
             data: {
-                labels,
+                labels: labels,
                 datasets: [{
                     label: "Your profile",
                     data: values,
@@ -359,8 +402,8 @@
                     borderWidth: 2,
                     pointBackgroundColor: "#3b82f6",
                     pointBorderColor: "#0a0e14",
-                    pointRadius: 3,
-                    pointHoverRadius: 5,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
                     tension: 0.15,
                 }]
             },
@@ -379,16 +422,26 @@
                             display: false,
                             stepSize: 2
                         },
-                        grid: { color: "rgba(255,255,255,0.08)" },
-                        angleLines: { color: "rgba(255,255,255,0.08)" },
+                        grid: { 
+                            color: "rgba(255,255,255,0.08)" 
+                        },
+                        angleLines: { 
+                            color: "rgba(255,255,255,0.08)" 
+                        },
                         pointLabels: {
                             color: "#8899aa",
-                            font: { size: 10, family: "Inter" }
+                            font: { 
+                                size: 11, 
+                                family: "Inter",
+                                weight: "500"
+                            }
                         }
                     }
                 },
                 plugins: {
-                    legend: { display: false },
+                    legend: { 
+                        display: false 
+                    },
                     tooltip: {
                         backgroundColor: "#131a24",
                         borderColor: "rgba(255,255,255,0.1)",
@@ -403,6 +456,13 @@
             }
         });
 
+        // Force a re-render after a small delay
+        setTimeout(() => {
+            if (factorsChartInstance) {
+                factorsChartInstance.resize();
+            }
+        }, 100);
+
         // subtle entrance for the chart card itself
         if (hasGSAP && !prefersReducedMotion) {
             gsap.fromTo(".chart-card",
@@ -413,6 +473,9 @@
     }
 
     function renderResult(score, payload) {
+        latestScore = score;
+        latestPayload = payload;
+
         const clamped = Math.max(0, Math.min(10, score));
         const { label, context } = bandFor(clamped);
 
@@ -491,6 +554,155 @@
     }
 
     // =========================================================
+    // GROQ API Integration for Chat
+    // =========================================================
+    async function getAIInsight(question) {
+        if (!CONFIG.GROQ_API_KEY) {
+            return "I'm sorry, the AI insights feature is not configured. Please add your GROQ API key.";
+        }
+
+        try {
+            const response = await fetch(CONFIG.GROQ_API_URL, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${CONFIG.GROQ_API_KEY}`
+                },
+                body: JSON.stringify({
+                    model: CONFIG.GROQ_MODEL,
+                    messages: [
+                        {
+                            role: "system",
+                            content: `You are a compassionate wellness coach. You have access to a user's mental health wellness score (${latestScore}/10) and their lifestyle factors. Provide helpful, actionable, and supportive insights about their wellness. Keep responses under 150 words and focus on practical advice.`
+                        },
+                        {
+                            role: "user",
+                            content: `My wellness score is ${latestScore}/10. Here are my factors: ${JSON.stringify(computeFactorScores(latestPayload))}. ${question}`
+                        }
+                    ],
+                    temperature: 0.7,
+                    max_tokens: 300,
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => null);
+                throw new Error(errorData?.error?.message || `API responded with status ${response.status}`);
+            }
+
+            const data = await response.json();
+            return data.choices?.[0]?.message?.content || "I'm sorry, I couldn't generate a response at this time.";
+        } catch (error) {
+            console.error("GROQ API Error:", error);
+            return "I'm having trouble connecting to the AI service. Please try again later.";
+        }
+    }
+
+    // =========================================================
+    // Chat UI Functions
+    // =========================================================
+    function addMessage(text, type) {
+        const messageDiv = document.createElement("div");
+        messageDiv.className = `chat-message ${type}`;
+        messageDiv.innerHTML = `<div class="message-content">${text}</div>`;
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function addTypingIndicator() {
+        const messageDiv = document.createElement("div");
+        messageDiv.className = "chat-message bot";
+        messageDiv.id = "typing-indicator";
+        messageDiv.innerHTML = `
+            <div class="message-content">
+                <div class="typing-indicator">
+                    <span></span><span></span><span></span>
+                </div>
+            </div>
+        `;
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function removeTypingIndicator() {
+        const indicator = document.getElementById("typing-indicator");
+        if (indicator) indicator.remove();
+    }
+
+    async function handleChatSend() {
+        const question = chatInput.value.trim();
+        if (!question) return;
+
+        // Disable input while processing
+        chatInput.disabled = true;
+        chatSendBtn.disabled = true;
+
+        // Add user message
+        addMessage(question, "user");
+        chatInput.value = "";
+
+        // Show typing indicator
+        addTypingIndicator();
+
+        try {
+            const response = await getAIInsight(question);
+            removeTypingIndicator();
+            addMessage(response, "bot");
+        } catch (error) {
+            removeTypingIndicator();
+            addMessage("I'm sorry, something went wrong. Please try again.", "bot");
+        } finally {
+            chatInput.disabled = false;
+            chatSendBtn.disabled = false;
+            chatInput.focus();
+        }
+    }
+
+    // =========================================================
+    // Event Listeners - Chat
+    // =========================================================
+    if (chatToggleBtn) {
+        chatToggleBtn.addEventListener("click", () => {
+            chatContainer.classList.toggle("hidden");
+            if (!chatContainer.classList.contains("hidden")) {
+                chatInput.focus();
+                // Reset chat to initial state if no messages
+                if (chatMessages.children.length === 0) {
+                    addMessage("Hi! I can help you understand your wellness score better. Ask me anything about your results or get personalized recommendations.", "bot");
+                }
+            }
+        });
+    }
+
+    if (chatCloseBtn) {
+        chatCloseBtn.addEventListener("click", () => {
+            chatContainer.classList.add("hidden");
+        });
+    }
+
+    if (chatSendBtn) {
+        chatSendBtn.addEventListener("click", handleChatSend);
+    }
+
+    if (chatInput) {
+        chatInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                handleChatSend();
+            }
+        });
+    }
+
+    if (suggestionChips) {
+        suggestionChips.forEach(chip => {
+            chip.addEventListener("click", () => {
+                chatInput.value = chip.dataset.question;
+                handleChatSend();
+            });
+        });
+    }
+
+    // =========================================================
     // Form Submit
     // =========================================================
     if (form) {
@@ -519,7 +731,7 @@
             }
 
             try {
-                const res = await fetch(`${API_BASE}/predict`, {
+                const res = await fetch(`${CONFIG.API_BASE}/predict`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(payload),
@@ -556,7 +768,7 @@
             } catch (err) {
                 renderError(
                     "Can't Reach Server",
-                    `Couldn't connect to ${API_BASE}. Make sure the backend is running.`
+                    `Couldn't connect to ${CONFIG.API_BASE}. Make sure the backend is running.`
                 );
             } finally {
                 setSubmitting(false);
@@ -578,6 +790,11 @@
     if (resetBtn) {
         resetBtn.addEventListener("click", () => {
             showState("idle");
+            // Reset chat
+            chatMessages.innerHTML = "";
+            chatContainer.classList.add("hidden");
+            latestPayload = null;
+            latestScore = null;
         });
     }
     if (errorRetryBtn) {
@@ -599,7 +816,7 @@
     // Check API Health
     async function checkApiHealth() {
         try {
-            const response = await fetch(`${API_BASE}/health`);
+            const response = await fetch(`${CONFIG.API_BASE}/health`);
             if (response.ok) {
                 const data = await response.json();
                 console.log("✅ API is healthy:", data);

@@ -311,10 +311,39 @@
                     <p class="score-context" id="score-context"></p>
 
                     <!-- Factor breakdown chart -->
-                    <div class="chart-card">
+                    <div class="chart-card" id="chart-card">
                         <p class="chart-card-title"><i class="fas fa-chart-simple"></i> Your Factor Breakdown</p>
                         <div class="chart-wrap">
                             <canvas id="factors-chart" width="260" height="220" role="img" aria-label="Radar chart of your lifestyle factors"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Chat/AI Follow-up Section -->
+                    <div class="chat-section" id="chat-section">
+                        <button class="chat-toggle-btn" id="chat-toggle-btn">
+                            <i class="fas fa-comment-dots"></i> Get AI Insights
+                        </button>
+                        <div class="chat-container hidden" id="chat-container">
+                            <div class="chat-header">
+                                <span><i class="fas fa-robot"></i> AI Wellness Coach</span>
+                                <button class="chat-close-btn" id="chat-close-btn"><i class="fas fa-times"></i></button>
+                            </div>
+                            <div class="chat-messages" id="chat-messages">
+                                <div class="chat-message bot">
+                                    <div class="message-content">
+                                        Hi! I can help you understand your wellness score better. Ask me anything about your results or get personalized recommendations.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="chat-input-area">
+                                <input type="text" class="chat-input" id="chat-input" placeholder="Ask about your wellness score..." />
+                                <button class="chat-send-btn" id="chat-send-btn"><i class="fas fa-paper-plane"></i></button>
+                            </div>
+                            <div class="chat-suggestions" id="chat-suggestions">
+                                <button class="suggestion-chip" data-question="What does my score mean?">What does my score mean?</button>
+                                <button class="suggestion-chip" data-question="How can I improve my wellness?">How can I improve?</button>
+                                <button class="suggestion-chip" data-question="What are the key factors affecting me?">Key factors affecting me</button>
+                            </div>
                         </div>
                     </div>
 
