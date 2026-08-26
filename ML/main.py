@@ -1,35 +1,48 @@
 import joblib
 import pandas as pd
 import os
-import numpy as np
+import sys
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import Literal
 
-print("🔍 Starting API...")
+print("🔍 Debugging Model Loading...")
 print(f"📍 Current directory: {os.getcwd()}")
 print(f"📂 Contents: {os.listdir('.')}")
 
-# Try to load model
-model = None
-model_paths = [
-    "./data/models/Mental_Health_Score_Model.pkl",
-    "data/models/Mental_Health_Score_Model.pkl",
-    "/opt/render/project/src/ML/data/models/Mental_Health_Score_Model.pkl",
-]
+# Check data directory
+if os.path.exists('data'):
+    print(f"📂 Contents of data: {os.listdir('data')}")
+    if os.path.exists('data/models'):
+        print(f"📂 Contents of data/models: {os.listdir('data/models')}")
+    else:
+        print("❌ data/models directory does not exist!")
+else:
+    print("❌ data directory does not exist!")
 
-for path in model_paths:
-    if os.path.exists(path):
-        try:
-            model = joblib.load(path)
-            print(f"✅ Model loaded from: {path}")
-            break
-        except Exception as e:
-            print(f"❌ Error loading from {path}: {e}")
+# Try to find the model file
+model = None
+model_found = False
+
+# Search for .pkl files
+for root, dirs, files in os.walk('.'):
+    for file in files:
+        if file.endswith('.pkl'):
+            print(f"✅ Found model file: {os.path.join(root, file)}")
+            try:
+                model = joblib.load(os.path.join(root, file))
+                print(f"✅ Model loaded successfully from: {os.path.join(root, file)}")
+                model_found = True
+                break
+            except Exception as e:
+                print(f"❌ Error loading {file}: {e}")
+    if model_found:
+        break
 
 if model is None:
-    print("⚠️ Using fallback prediction logic")
+    print("❌ No model file found in any directory!")
+    print("💡 Make sure to add the model file to your repository")
 
 top_countries = ['Other', 'India', 'USA', 'Canada', 'Australia', 'UK', 'Germany', 'Mexico', 'Turkey', 'France']
 
@@ -115,10 +128,12 @@ def fallback_predict(data: StudentData) -> float:
 @app.get('/health')
 def health_check():
     return {
-        'status': 'healthy' if model else 'partial',
+        'status': 'healthy' if model else 'unhealthy',
         'model_loaded': model is not None,
-        'using_fallback': model is None,
-        'version': '1.0.0'
+        'model_type': str(type(model)) if model else 'None',
+        'version': '1.0.0',
+        'cwd': os.getcwd(),
+        'files': os.listdir('.')
     }
 
 @app.get('/')
