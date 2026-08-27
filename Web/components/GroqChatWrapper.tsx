@@ -10,11 +10,11 @@ import {
   XCircleIcon,
   ArrowDownTrayIcon,
 } from "@heroicons/react/24/outline";
-import { fetchGroqModels, sendGroqMessage } from "@/lib/api";
+import { fetchGroqModels, sendGroqMessage } from "@/lib/groq";
 import MessageContent from "./MessageContent";
 
 type Message = {
-  role: "user" | "assistant";
+  role: "user" | "assistant" | "system"; 
   content: string;
   timestamp: string;
 };
@@ -24,15 +24,13 @@ interface GroqChatWrapperProps {
 }
 
 const FALLBACK_MODELS = [
-  "compound-beta",
-  "llama3-8b-8192",
-  "mixtral-8x7b-32768",
-  "gemma2-9b-it",
+  "llama-3.3-70b-versatile",
+  "openai/gpt-oss-20b",
+  "llama-3.1-8b-instant",
 ];
 
 function pickDefaultModel(list: string[]): string {
-  const compound = list.find((m) => m.toLowerCase().includes("compound"));
-  return compound || list[0] || "";
+  return list[0] || "";
 }
 
 const iconBtnClass =
@@ -44,7 +42,6 @@ const getTimeNow = () =>
 export default function GroqChatWrapper({
   initialMessage,
 }: GroqChatWrapperProps) {
-  // ✅ Only ONE useState for messages – uses lazy initializer
   const [messages, setMessages] = useState<Message[]>(() =>
     initialMessage
       ? [
@@ -86,7 +83,6 @@ export default function GroqChatWrapper({
     loadModels();
   }, []);
 
-  // Auto-scroll ONLY the internal chat container
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
@@ -171,8 +167,9 @@ export default function GroqChatWrapper({
       typeof AbortController !== "undefined" ? new AbortController() : null;
 
     try {
+      const cleanMessages = newMessages.map(({ role, content }) => ({ role, content }));
       const reply = await sendGroqMessage(
-        newMessages,
+        cleanMessages,
         selectedModel,
         controllerRef.current?.signal as AbortSignal
       );
@@ -188,11 +185,7 @@ export default function GroqChatWrapper({
       console.error("Chat error:", error);
       setMessages((prev) => [
         ...prev,
-        {
-          role: "assistant",
-          content: "Error connecting to Groq.",
-          timestamp: getTimeNow(),
-        },
+        { role: "assistant", content: "Error connecting to Groq.", timestamp: getTimeNow() },
       ]);
     } finally {
       setIsSending(false);
@@ -212,11 +205,7 @@ export default function GroqChatWrapper({
 
     setMessages((prev) => [
       ...prev,
-      {
-        role: "assistant",
-        content: "_Generation stopped._",
-        timestamp: getTimeNow(),
-      },
+      { role: "assistant", content: "_Generation stopped._", timestamp: getTimeNow() },
     ]);
   };
 
@@ -339,9 +328,7 @@ export default function GroqChatWrapper({
 
       {/* Model selector */}
       <div className="mb-3 flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-2">
-        <label className="shrink-0 text-xs font-medium tracking-wide text-slate-500">
-          Model
-        </label>
+        <label className="shrink-0 text-xs font-medium tracking-wide text-slate-500">Model</label>
         <select
           value={selectedModel}
           onChange={(e) => setSelectedModel(e.target.value)}
@@ -364,9 +351,7 @@ export default function GroqChatWrapper({
         {messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center gap-2 px-4 text-center">
             <ChatBubbleLeftRightIcon className="h-6 w-6 text-slate-700" />
-            <p className="text-xs text-slate-600 sm:text-sm">
-              Submit a prediction or start typing…
-            </p>
+            <p className="text-xs text-slate-600 sm:text-sm">Submit a prediction or start typing…</p>
           </div>
         ) : (
           <AnimatePresence initial={false}>
@@ -389,9 +374,7 @@ export default function GroqChatWrapper({
                     {msg.role === "assistant" ? (
                       <MessageContent text={msg.content} />
                     ) : (
-                      <p className="text-[13px] leading-relaxed sm:text-[14px]">
-                        {msg.content}
-                      </p>
+                      <p className="text-[13px] leading-relaxed sm:text-[14px]">{msg.content}</p>
                     )}
                   </div>
                   <span
@@ -420,12 +403,7 @@ export default function GroqChatWrapper({
                   key={i}
                   className="h-1.5 w-1.5 rounded-full bg-slate-400"
                   animate={{ opacity: [0.3, 1, 0.3], y: [0, -3, 0] }}
-                  transition={{
-                    duration: 1,
-                    repeat: Infinity,
-                    delay: i * 0.15,
-                    ease: "easeInOut",
-                  }}
+                  transition={{ duration: 1, repeat: Infinity, delay: i * 0.15, ease: "easeInOut" }}
                 />
               ))}
             </div>
@@ -442,9 +420,7 @@ export default function GroqChatWrapper({
           onKeyDown={(e) => e.key === "Enter" && handleSend()}
           placeholder={isListening ? "Listening…" : "Ask about mental health…"}
           className={`min-w-0 flex-1 basis-full rounded-xl border bg-white/[0.04] px-3.5 py-2.5 text-[14px] text-slate-100 placeholder-slate-500 outline-none backdrop-blur-sm transition-colors focus:ring-2 focus:ring-emerald-500/25 sm:basis-0 ${
-            isListening
-              ? "border-rose-400/50"
-              : "border-white/10 focus:border-emerald-400/60"
+            isListening ? "border-rose-400/50" : "border-white/10 focus:border-emerald-400/60"
           }`}
         />
 
@@ -496,11 +472,7 @@ export default function GroqChatWrapper({
               <motion.span
                 className="absolute inset-0 rounded-xl bg-rose-500/30"
                 animate={{ opacity: [0.6, 0, 0.6], scale: [1, 1.3, 1] }}
-                transition={{
-                  duration: 1.4,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
+                transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
               />
             )}
             <MicrophoneIcon className="relative h-4 w-4 sm:h-4.5 sm:w-4.5" />
@@ -512,18 +484,13 @@ export default function GroqChatWrapper({
             onClick={() => {
               const currentlySpeaking =
                 speakingRef.current ||
-                (typeof window !== "undefined" &&
-                  "speechSynthesis" in window &&
-                  window.speechSynthesis.speaking);
+                (typeof window !== "undefined" && "speechSynthesis" in window && window.speechSynthesis.speaking);
 
               if (currentlySpeaking) {
                 stopSpeaking();
                 return;
               }
-              const lastReply = messages
-                .slice()
-                .reverse()
-                .find((m) => m.role === "assistant");
+              const lastReply = messages.slice().reverse().find((m) => m.role === "assistant");
               if (lastReply) speakText(lastReply.content);
             }}
             aria-label={isSpeaking ? "Stop speaking" : "Replay last reply"}

@@ -29,45 +29,60 @@ export const fetchGroqModels = async () => {
   if (!GROQ_API_KEY) {
     throw new Error('NEXT_PUBLIC_GROQ_API_KEY is not set');
   }
-  const response = await axios.get(`${GROQ_BASE_URL}/models`, {
+  const response = await fetch(`${GROQ_BASE_URL}/models`, {
     headers: {
       'Authorization': `Bearer ${GROQ_API_KEY}`,
       'Content-Type': 'application/json',
     },
   });
-  // Return the list of model IDs
-  return response.data.data.map((model: any) => model.id);
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch models');
+  }
+
+  const data = await response.json();
+  return data.data.map((model: any) => model.id);
 };
 
 // Send a chat completion with a chosen model (dynamic)
-// UPDATED: Added optional 'signal' parameter for request cancellation
 export const sendGroqMessage = async (
   messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>,
-  model: string, // now required – no default
-  signal?: AbortSignal // <--- Added this line
+  model: string,
+  signal?: AbortSignal
 ) => {
   if (!GROQ_API_KEY) {
     throw new Error('NEXT_PUBLIC_GROQ_API_KEY is not set');
   }
 
-  const response = await axios.post(
-    `${GROQ_BASE_URL}/chat/completions`,
-    {
-      model,
-      messages,
-      temperature: 0.7,
-      max_tokens: 512,
-    },
-    {
-      headers: {
-        'Authorization': `Bearer ${GROQ_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      signal, // <--- Passed signal into Axios config
-    }
-  );
+  // THE CRITICAL FIX: Remove empty messages AND strip out the 'timestamp' property
+  // Groq ONLY supports { role, content }. It does NOT support 'timestamp'.
+  const cleanMessages = messages
+    .filter((m) => m.content && m.content.trim().length > 0)
+    .map(({ role, content }) => ({ role, content })); 
 
-  const reply = response.data.choices[0]?.message?.content;
+  if (cleanMessages.length === 0) throw new Error('Cannot send empty messages');
+
+  const response = await fetch(`${GROQ_BASE_URL}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${GROQ_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model,
+      messages: cleanMessages,
+      max_tokens: 512,
+    }),
+    signal,
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData?.error?.message || 'Groq API error');
+  }
+
+  const data = await response.json();
+  const reply = data.choices[0]?.message?.content;
   if (!reply) throw new Error('No reply from Groq');
   return reply;
 };
