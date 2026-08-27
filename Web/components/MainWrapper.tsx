@@ -18,9 +18,6 @@ import StarField from './StarField';
 import MessageContent from './MessageContent';
 
 // ---------- Types ----------
-// Keep this in sync with `top_countries` in the FastAPI backend (main.py).
-// The backend normalizes anything outside this list to "Other", so the
-// dropdown below intentionally mirrors it 1:1.
 const COUNTRIES = ['India', 'USA', 'Canada', 'Australia', 'UK', 'Germany', 'Mexico', 'Turkey', 'France', 'Other'] as const;
 
 type FormData = {
@@ -58,7 +55,7 @@ type Result = {
 
 // ---------- Shared field styling ----------
 const fieldClass =
-  'mt-1.5 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-[15px] text-slate-100 placeholder-slate-500 shadow-inner shadow-black/20 outline-none backdrop-blur-sm transition-all duration-200 focus:border-violet-400/60 focus:bg-white/[0.07] focus:ring-2 focus:ring-violet-500/25';
+  'mt-1.5 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-[15px] text-slate-100 placeholder-slate-500 shadow-inner shadow-black/20 outline-none backdrop-blur-sm transition-all duration-200 focus:border-emerald-400/60 focus:bg-white/[0.07] focus:ring-2 focus:ring-emerald-500/25';
 const labelClass = 'block text-[13px] font-medium tracking-wide text-slate-400';
 
 export default function MainWrapper() {
@@ -81,12 +78,10 @@ export default function MainWrapper() {
   const [result, setResult] = useState<Result | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Refs for GSAP
   const gaugeRef = useRef<SVGCircleElement>(null);
   const gaugeGlowRef = useRef<SVGCircleElement>(null);
   const resultRef = useRef<HTMLDivElement>(null);
 
-  // ---------- Predict ----------
   const handlePredict = async () => {
     setLoading(true);
     try {
@@ -100,7 +95,6 @@ export default function MainWrapper() {
     }
   };
 
-  // ---------- GSAP gauge animation ----------
   useEffect(() => {
     if (result && gaugeRef.current) {
       const score = result.predicted_mental_health_score / 10;
@@ -114,7 +108,6 @@ export default function MainWrapper() {
     }
   }, [result]);
 
-  // Entrance animation for result card
   useEffect(() => {
     if (result && resultRef.current) {
       gsap.fromTo(
@@ -125,64 +118,47 @@ export default function MainWrapper() {
     }
   }, [result]);
 
-  // ---------- Score presentation helpers ----------
   const scoreColor = (score: number) => {
     if (score >= 7) return { ring: '#34d399', glow: 'rgba(52,211,153,0.55)', text: 'text-emerald-400' };
     if (score >= 4) return { ring: '#fbbf24', glow: 'rgba(251,191,36,0.55)', text: 'text-amber-400' };
     return { ring: '#fb7185', glow: 'rgba(251,113,133,0.55)', text: 'text-rose-400' };
   };
 
-  // ---------- Key Factors ----------
   const keyFactors = [
     {
       label: 'Stress Level',
       value: formData.stress_level,
       icon: BoltIcon,
-      color:
-        formData.stress_level === 'Low'
-          ? 'text-emerald-400 bg-emerald-400/10 ring-emerald-400/20'
-          : formData.stress_level === 'Medium'
-          ? 'text-amber-400 bg-amber-400/10 ring-amber-400/20'
-          : 'text-rose-400 bg-rose-400/10 ring-rose-400/20',
+      // Changed to emerald for all factors
+      color: 'text-emerald-400 bg-emerald-400/10 ring-emerald-400/20',
     },
     {
       label: 'Sleep Hours',
       value: `${formData.sleep_hours_per_night}h`,
       icon: MoonIcon,
-      color:
-        formData.sleep_hours_per_night >= 7
-          ? 'text-emerald-400 bg-emerald-400/10 ring-emerald-400/20'
-          : 'text-rose-400 bg-rose-400/10 ring-rose-400/20',
+      color: 'text-emerald-400 bg-emerald-400/10 ring-emerald-400/20',
     },
     {
       label: 'Screen Time',
       value: `${formData.avg_daily_usage_hours}h/day`,
       icon: ClockIcon,
-      color:
-        formData.avg_daily_usage_hours <= 6
-          ? 'text-emerald-400 bg-emerald-400/10 ring-emerald-400/20'
-          : 'text-rose-400 bg-rose-400/10 ring-rose-400/20',
+      color: 'text-emerald-400 bg-emerald-400/10 ring-emerald-400/20',
     },
     {
       label: 'Physical Activity',
       value: `${formData.physical_activity_hours}h`,
       icon: HeartIcon,
-      color:
-        formData.physical_activity_hours >= 1
-          ? 'text-emerald-400 bg-emerald-400/10 ring-emerald-400/20'
-          : 'text-rose-400 bg-rose-400/10 ring-rose-400/20',
+      color: 'text-emerald-400 bg-emerald-400/10 ring-emerald-400/20',
     },
   ];
 
   const sc = result ? scoreColor(result.predicted_mental_health_score) : null;
 
-  // ---------- Render ----------
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#04030e] text-slate-100">
-      {/* Ambient backdrop layers */}
       <StarField />
-      <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,rgba(124,58,237,0.25),transparent)]" />
-      <div className="pointer-events-none fixed -left-40 top-1/3 z-0 h-[32rem] w-[32rem] rounded-full bg-fuchsia-600/10 blur-[120px]" />
+      <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,rgba(16,185,129,0.15),transparent)]" />
+      <div className="pointer-events-none fixed -left-40 top-1/3 z-0 h-[32rem] w-[32rem] rounded-full bg-emerald-600/10 blur-[120px]" />
       <div className="pointer-events-none fixed -right-40 bottom-0 z-0 h-[32rem] w-[32rem] rounded-full bg-cyan-500/10 blur-[120px]" />
 
       <motion.div
@@ -193,7 +169,7 @@ export default function MainWrapper() {
       >
         <div className="mx-auto max-w-6xl">
           <div className="mb-10 text-center">
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] text-violet-300 backdrop-blur-sm">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] text-emerald-300 backdrop-blur-sm">
               <SparklesIcon className="h-3.5 w-3.5" />
               AI Wellbeing Insight
             </div>
@@ -205,16 +181,17 @@ export default function MainWrapper() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+          {/* Layout fix included */}
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 items-start">
             {/* Left: Form */}
             <motion.div
               initial={{ x: -20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ delay: 0.15, duration: 0.6 }}
-              className="rounded-3xl border border-white/10 bg-white/[0.035] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.02),0_20px_60px_-15px_rgba(0,0,0,0.6)] backdrop-blur-xl"
+              className="rounded-3xl border border-white/10 bg-white/[0.035] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.02),0_20px_60px_-15px_rgba(0,0,0,0.6)] backdrop-blur-xl self-start"
             >
               <h2 className="mb-5 flex items-center gap-2 text-lg font-semibold text-slate-100">
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/15 text-violet-300 ring-1 ring-violet-400/20">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-400/20">
                   <UserCircleIcon className="h-5 w-5" />
                 </span>
                 Your Details
@@ -245,7 +222,7 @@ export default function MainWrapper() {
 
                 <div>
                   <label className={`${labelClass} flex items-center gap-1.5`}>
-                    <GlobeAltIcon className="h-3.5 w-3.5" />
+                    <GlobeAltIcon className="h-3.5 w-3.5 text-emerald-400" />
                     Country
                   </label>
                   <select
@@ -383,12 +360,13 @@ export default function MainWrapper() {
                   </select>
                 </div>
 
+                {/* Emerald Green Button */}
                 <motion.button
                   whileHover={{ scale: 1.015 }}
                   whileTap={{ scale: 0.985 }}
                   onClick={handlePredict}
                   disabled={loading}
-                  className="group relative mt-2 w-full overflow-hidden rounded-xl bg-gradient-to-r from-violet-600 via-fuchsia-600 to-violet-600 bg-[length:200%_100%] py-3 font-semibold text-white shadow-[0_8px_30px_-8px_rgba(139,92,246,0.65)] transition-[background-position] duration-500 hover:bg-[position:100%_0] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="group relative mt-2 w-full overflow-hidden rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 bg-[length:200%_100%] py-3 font-semibold text-white shadow-[0_8px_30px_-8px_rgba(16,185,129,0.65)] transition-[background-position] duration-500 hover:bg-[position:100%_0] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <span className="relative z-10 flex items-center justify-center gap-2">
                     {loading ? (
@@ -408,20 +386,19 @@ export default function MainWrapper() {
             </motion.div>
 
             {/* Right: Results + Chat */}
-            <div className="space-y-6">
+            <div className="space-y-6 self-start">
               {result && sc && (
                 <motion.div
                   ref={resultRef}
                   className="rounded-3xl border border-white/10 bg-white/[0.035] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.02),0_20px_60px_-15px_rgba(0,0,0,0.6)] backdrop-blur-xl"
                 >
                   <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-100">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-500/15 text-rose-300 ring-1 ring-rose-400/20">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-400/20">
                       <HeartIcon className="h-5 w-5" />
                     </span>
                     Results
                   </h2>
 
-                  {/* Gauge */}
                   <div className="mb-5 flex justify-center">
                     <div className="relative h-36 w-36">
                       <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90 transform">
@@ -469,7 +446,6 @@ export default function MainWrapper() {
                     </div>
                   </div>
 
-                  {/* Key Factors */}
                   <div className="mt-5 grid grid-cols-2 gap-3">
                     {keyFactors.map((factor) => (
                       <div
@@ -489,7 +465,6 @@ export default function MainWrapper() {
                 </motion.div>
               )}
 
-              {/* Chat Wrapper – passes the result message if available */}
               <GroqChatWrapper
                 initialMessage={
                   result
@@ -501,6 +476,50 @@ export default function MainWrapper() {
           </div>
         </div>
       </motion.div>
+
+      {/* ===== GLOBAL DARK SCROLLBAR + HIDE SPINNERS ===== */}
+      <style>{`
+        html, body, * {
+          scrollbar-width: thin !important;
+          scrollbar-color: #334155 #0f172a !important;
+        }
+
+        html::-webkit-scrollbar,
+        body::-webkit-scrollbar,
+        *::-webkit-scrollbar {
+          width: 8px !important;
+          height: 8px !important;
+        }
+
+        html::-webkit-scrollbar-track,
+        body::-webkit-scrollbar-track,
+        *::-webkit-scrollbar-track {
+          background: #0f172a !important;
+        }
+
+        html::-webkit-scrollbar-thumb,
+        body::-webkit-scrollbar-thumb,
+        *::-webkit-scrollbar-thumb {
+          background: #334155 !important;
+          border-radius: 4px !important;
+        }
+
+        html::-webkit-scrollbar-thumb:hover,
+        body::-webkit-scrollbar-thumb:hover,
+        *::-webkit-scrollbar-thumb:hover {
+          background: #475569 !important;
+        }
+
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+          -webkit-appearance: none !important;
+          margin: 0 !important;
+        }
+        input[type="number"] {
+          -moz-appearance: textfield !important;
+          appearance: textfield !important;
+        }
+      `}</style>
     </div>
   );
 }
