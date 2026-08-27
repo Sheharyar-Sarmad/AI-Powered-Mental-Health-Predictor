@@ -1,7 +1,3 @@
-"use client";
-
-import { motion } from "framer-motion";
-import Image from "next/image";
 import Link from "next/link";
 import StarField from "@/components/StarField";
 
@@ -15,20 +11,15 @@ export default function NotFound() {
       <div className="pointer-events-none fixed -right-40 bottom-0 z-0 h-[32rem] w-[32rem] rounded-full bg-cyan-500/10 blur-[120px]" />
 
       <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-6 py-24 text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, ease: "easeOut" }}
-          className="flex max-w-2xl flex-col items-center"
-        >
-          {/* Logo */}
+        <div className="flex max-w-2xl flex-col items-center">
+          {/* Logo (Using regular img to avoid crash) */}
           <div className="mb-6 flex justify-center">
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src="/logo.png"
               alt="Mental Health Predictor Logo"
               width={120}
               height={120}
-              priority
               className="drop-shadow-[0_0_15px_rgba(16,185,129,0.4)]"
             />
           </div>
@@ -64,13 +55,13 @@ export default function NotFound() {
             </Link>
 
             <Link
-              href="/#predictor"
+              href="/"
               className="rounded-xl border border-white/10 bg-white/[0.04] px-8 py-3.5 font-semibold text-slate-200 backdrop-blur-sm transition-colors hover:border-emerald-400/60 hover:bg-white/[0.07] hover:text-emerald-300"
             >
               Try the Predictor
             </Link>
           </div>
-        </motion.div>
+        </div>
       </div>
 
       {/* Dark Scrollbar Styles */}
