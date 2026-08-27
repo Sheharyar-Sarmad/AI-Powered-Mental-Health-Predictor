@@ -1,8 +1,9 @@
-'use client';
+"use client";
 
-import { useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
-import { gsap } from 'gsap';
+import { useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
+import { gsap } from "gsap";
+import Image from "next/image"; // <--- ADDED THIS IMPORT
 import {
   UserCircleIcon,
   HeartIcon,
@@ -11,40 +12,51 @@ import {
   BoltIcon,
   SparklesIcon,
   GlobeAltIcon,
-} from '@heroicons/react/24/outline';
-import { predictStudent } from '@/lib/api';
-import GroqChatWrapper from './GroqChatWrapper';
-import StarField from './StarField';
-import MessageContent from './MessageContent';
+} from "@heroicons/react/24/outline";
+import { predictStudent } from "@/lib/api";
+import GroqChatWrapper from "./GroqChatWrapper";
+import StarField from "./StarField";
+import MessageContent from "./MessageContent";
 
 // ---------- Types ----------
-const COUNTRIES = ['India', 'USA', 'Canada', 'Australia', 'UK', 'Germany', 'Mexico', 'Turkey', 'France', 'Other'] as const;
+const COUNTRIES = [
+  "India",
+  "USA",
+  "Canada",
+  "Australia",
+  "UK",
+  "Germany",
+  "Mexico",
+  "Turkey",
+  "France",
+  "Other",
+] as const;
 
 type FormData = {
   age: number;
-  gender: 'Male' | 'Female';
+  gender: "Male" | "Female";
   country: (typeof COUNTRIES)[number];
-  academic_level: 'Undergraduate' | 'Graduate' | 'High School';
+  academic_level: "Undergraduate" | "Graduate" | "High School";
   most_used_platform:
-    | 'Facebook'
-    | 'LinkedIn'
-    | 'Instagram'
-    | 'Snapchat'
-    | 'Twitter'
-    | 'YouTube'
-    | 'TikTok'
-    | 'LINE'
-    | 'KakaoTalk'
-    | 'VKontakte'
-    | 'WhatsApp'
-    | 'WeChat';
-  purpose_of_use: 'Networking' | 'Education' | 'Entertainment' | 'News';
+    | "Facebook"
+    | "LinkedIn"
+    | "Instagram"
+    | "Snapchat"
+    | "Twitter"
+    | "YouTube"
+    | "TikTok"
+    | "LINE"
+    | "KakaoTalk"
+    | "VKontakte"
+    | "WhatsApp"
+    | "WeChat";
+  purpose_of_use: "Networking" | "Education" | "Entertainment" | "News";
   avg_daily_usage_hours: number;
   daily_unlocks: number;
   study_hours: number;
   physical_activity_hours: number;
   sleep_hours_per_night: number;
-  stress_level: 'Low' | 'Medium' | 'High' | 'Very High';
+  stress_level: "Low" | "Medium" | "High" | "Very High";
 };
 
 type Result = {
@@ -55,24 +67,24 @@ type Result = {
 
 // ---------- Shared field styling ----------
 const fieldClass =
-  'mt-1.5 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-[15px] text-slate-100 placeholder-slate-500 shadow-inner shadow-black/20 outline-none backdrop-blur-sm transition-all duration-200 focus:border-emerald-400/60 focus:bg-white/[0.07] focus:ring-2 focus:ring-emerald-500/25';
-const labelClass = 'block text-[13px] font-medium tracking-wide text-slate-400';
+  "mt-1.5 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-[15px] text-slate-100 placeholder-slate-500 shadow-inner shadow-black/20 outline-none backdrop-blur-sm transition-all duration-200 focus:border-emerald-400/60 focus:bg-white/[0.07] focus:ring-2 focus:ring-emerald-500/25";
+const labelClass = "block text-[13px] font-medium tracking-wide text-slate-400";
 
 export default function MainWrapper() {
   // ---------- State ----------
   const [formData, setFormData] = useState<FormData>({
     age: 22,
-    gender: 'Male',
-    country: 'India',
-    academic_level: 'Undergraduate',
-    most_used_platform: 'Instagram',
-    purpose_of_use: 'Entertainment',
+    gender: "Male",
+    country: "India",
+    academic_level: "Undergraduate",
+    most_used_platform: "Instagram",
+    purpose_of_use: "Entertainment",
     avg_daily_usage_hours: 4,
     daily_unlocks: 50,
     study_hours: 3,
     physical_activity_hours: 1.5,
     sleep_hours_per_night: 7,
-    stress_level: 'Medium',
+    stress_level: "Medium",
   });
 
   const [result, setResult] = useState<Result | null>(null);
@@ -88,8 +100,8 @@ export default function MainWrapper() {
       const res = await predictStudent(formData);
       setResult(res);
     } catch (error) {
-      console.error('Prediction error:', error);
-      alert('Prediction failed. See console.');
+      console.error("Prediction error:", error);
+      alert("Prediction failed. See console.");
     } finally {
       setLoading(false);
     }
@@ -103,7 +115,7 @@ export default function MainWrapper() {
       gsap.fromTo(
         [gaugeRef.current, gaugeGlowRef.current],
         { strokeDashoffset: circumference },
-        { strokeDashoffset: offset, duration: 1.4, ease: 'power3.out' }
+        { strokeDashoffset: offset, duration: 1.4, ease: "power3.out" },
       );
     }
   }, [result]);
@@ -113,42 +125,55 @@ export default function MainWrapper() {
       gsap.fromTo(
         resultRef.current,
         { opacity: 0, y: 30 },
-        { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out' }
+        { opacity: 1, y: 0, duration: 0.8, ease: "power3.out" },
       );
     }
   }, [result]);
 
   const scoreColor = (score: number) => {
-    if (score >= 7) return { ring: '#34d399', glow: 'rgba(52,211,153,0.55)', text: 'text-emerald-400' };
-    if (score >= 4) return { ring: '#fbbf24', glow: 'rgba(251,191,36,0.55)', text: 'text-amber-400' };
-    return { ring: '#fb7185', glow: 'rgba(251,113,133,0.55)', text: 'text-rose-400' };
+    if (score >= 7)
+      return {
+        ring: "#34d399",
+        glow: "rgba(52,211,153,0.55)",
+        text: "text-emerald-400",
+      };
+    if (score >= 4)
+      return {
+        ring: "#fbbf24",
+        glow: "rgba(251,191,36,0.55)",
+        text: "text-amber-400",
+      };
+    return {
+      ring: "#fb7185",
+      glow: "rgba(251,113,133,0.55)",
+      text: "text-rose-400",
+    };
   };
 
   const keyFactors = [
     {
-      label: 'Stress Level',
+      label: "Stress Level",
       value: formData.stress_level,
       icon: BoltIcon,
-      // Changed to emerald for all factors
-      color: 'text-emerald-400 bg-emerald-400/10 ring-emerald-400/20',
+      color: "text-emerald-400 bg-emerald-400/10 ring-emerald-400/20",
     },
     {
-      label: 'Sleep Hours',
+      label: "Sleep Hours",
       value: `${formData.sleep_hours_per_night}h`,
       icon: MoonIcon,
-      color: 'text-emerald-400 bg-emerald-400/10 ring-emerald-400/20',
+      color: "text-emerald-400 bg-emerald-400/10 ring-emerald-400/20",
     },
     {
-      label: 'Screen Time',
+      label: "Screen Time",
       value: `${formData.avg_daily_usage_hours}h/day`,
       icon: ClockIcon,
-      color: 'text-emerald-400 bg-emerald-400/10 ring-emerald-400/20',
+      color: "text-emerald-400 bg-emerald-400/10 ring-emerald-400/20",
     },
     {
-      label: 'Physical Activity',
+      label: "Physical Activity",
       value: `${formData.physical_activity_hours}h`,
       icon: HeartIcon,
-      color: 'text-emerald-400 bg-emerald-400/10 ring-emerald-400/20',
+      color: "text-emerald-400 bg-emerald-400/10 ring-emerald-400/20",
     },
   ];
 
@@ -169,6 +194,18 @@ export default function MainWrapper() {
       >
         <div className="mx-auto max-w-6xl">
           <div className="mb-10 text-center">
+            {/* ADDED LOGO */}
+            <div className="mb-4 flex justify-center">
+              <Image
+                src="/logo.png" // <--- CHANGE THIS to your actual filename in public (e.g., "/logo.svg", "/brand.png")
+                alt="Mental Health Predictor Logo"
+                width={80}
+                height={80}
+                priority
+                className="drop-shadow-[0_0_15px_rgba(16,185,129,0.4)]"
+              />
+            </div>
+
             <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] text-emerald-300 backdrop-blur-sm">
               <SparklesIcon className="h-3.5 w-3.5" />
               AI Wellbeing Insight
@@ -177,7 +214,8 @@ export default function MainWrapper() {
               Mental Health Predictor
             </h1>
             <p className="mx-auto mt-3 max-w-xl text-sm text-slate-400 md:text-base">
-              Tell us about your day-to-day habits and get a personalized, data-driven read on your wellbeing.
+              Tell us about your day-to-day habits and get a personalized,
+              data-driven read on your wellbeing.
             </p>
           </div>
 
@@ -198,12 +236,18 @@ export default function MainWrapper() {
               </h2>
 
               <div className="max-h-[600px] space-y-4 overflow-y-auto pr-2 [scrollbar-width:thin] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar]:w-1.5">
+                {/* (All form inputs remain exactly the same) */}
                 <div>
                   <label className={labelClass}>Age</label>
                   <input
                     type="number"
                     value={formData.age}
-                    onChange={(e) => setFormData({ ...formData, age: parseInt(e.target.value) || 0 })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        age: parseInt(e.target.value) || 0,
+                      })
+                    }
                     className={fieldClass}
                   />
                 </div>
@@ -212,7 +256,12 @@ export default function MainWrapper() {
                   <label className={labelClass}>Gender</label>
                   <select
                     value={formData.gender}
-                    onChange={(e) => setFormData({ ...formData, gender: e.target.value as any })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        gender: e.target.value as any,
+                      })
+                    }
                     className={fieldClass}
                   >
                     <option className="bg-[#0b0a1a]">Male</option>
@@ -227,7 +276,12 @@ export default function MainWrapper() {
                   </label>
                   <select
                     value={formData.country}
-                    onChange={(e) => setFormData({ ...formData, country: e.target.value as any })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        country: e.target.value as any,
+                      })
+                    }
                     className={fieldClass}
                   >
                     {COUNTRIES.map((c) => (
@@ -237,7 +291,8 @@ export default function MainWrapper() {
                     ))}
                   </select>
                   <p className="mt-1 text-[11px] text-slate-500">
-                    Don&apos;t see your country? Choose &ldquo;Other&rdquo; — the model still works.
+                    Don&apos;t see your country? Choose &ldquo;Other&rdquo; —
+                    the model still works.
                   </p>
                 </div>
 
@@ -245,7 +300,12 @@ export default function MainWrapper() {
                   <label className={labelClass}>Academic Level</label>
                   <select
                     value={formData.academic_level}
-                    onChange={(e) => setFormData({ ...formData, academic_level: e.target.value as any })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        academic_level: e.target.value as any,
+                      })
+                    }
                     className={fieldClass}
                   >
                     <option className="bg-[#0b0a1a]">Undergraduate</option>
@@ -258,12 +318,17 @@ export default function MainWrapper() {
                   <label className={labelClass}>Most Used Platform</label>
                   <select
                     value={formData.most_used_platform}
-                    onChange={(e) => setFormData({ ...formData, most_used_platform: e.target.value as any })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        most_used_platform: e.target.value as any,
+                      })
+                    }
                     className={fieldClass}
                   >
                     {[
-                      'Facebook', 'LinkedIn', 'Instagram', 'Snapchat', 'Twitter',
-                      'YouTube', 'TikTok', 'LINE', 'KakaoTalk', 'VKontakte', 'WhatsApp', 'WeChat',
+                      "Facebook", "LinkedIn", "Instagram", "Snapchat", "Twitter",
+                      "YouTube", "TikTok", "LINE", "KakaoTalk", "VKontakte", "WhatsApp", "WeChat",
                     ].map((p) => (
                       <option key={p} className="bg-[#0b0a1a]">
                         {p}
@@ -276,7 +341,12 @@ export default function MainWrapper() {
                   <label className={labelClass}>Purpose of Use</label>
                   <select
                     value={formData.purpose_of_use}
-                    onChange={(e) => setFormData({ ...formData, purpose_of_use: e.target.value as any })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        purpose_of_use: e.target.value as any,
+                      })
+                    }
                     className={fieldClass}
                   >
                     <option className="bg-[#0b0a1a]">Networking</option>
@@ -293,7 +363,10 @@ export default function MainWrapper() {
                     step="0.1"
                     value={formData.avg_daily_usage_hours}
                     onChange={(e) =>
-                      setFormData({ ...formData, avg_daily_usage_hours: parseFloat(e.target.value) || 0 })
+                      setFormData({
+                        ...formData,
+                        avg_daily_usage_hours: parseFloat(e.target.value) || 0,
+                      })
                     }
                     className={fieldClass}
                   />
@@ -304,7 +377,12 @@ export default function MainWrapper() {
                   <input
                     type="number"
                     value={formData.daily_unlocks}
-                    onChange={(e) => setFormData({ ...formData, daily_unlocks: parseInt(e.target.value) || 0 })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        daily_unlocks: parseInt(e.target.value) || 0,
+                      })
+                    }
                     className={fieldClass}
                   />
                 </div>
@@ -315,19 +393,30 @@ export default function MainWrapper() {
                     type="number"
                     step="0.1"
                     value={formData.study_hours}
-                    onChange={(e) => setFormData({ ...formData, study_hours: parseFloat(e.target.value) || 0 })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        study_hours: parseFloat(e.target.value) || 0,
+                      })
+                    }
                     className={fieldClass}
                   />
                 </div>
 
                 <div>
-                  <label className={labelClass}>Physical Activity (hours)</label>
+                  <label className={labelClass}>
+                    Physical Activity (hours)
+                  </label>
                   <input
                     type="number"
                     step="0.1"
                     value={formData.physical_activity_hours}
                     onChange={(e) =>
-                      setFormData({ ...formData, physical_activity_hours: parseFloat(e.target.value) || 0 })
+                      setFormData({
+                        ...formData,
+                        physical_activity_hours:
+                          parseFloat(e.target.value) || 0,
+                      })
                     }
                     className={fieldClass}
                   />
@@ -340,7 +429,10 @@ export default function MainWrapper() {
                     step="0.1"
                     value={formData.sleep_hours_per_night}
                     onChange={(e) =>
-                      setFormData({ ...formData, sleep_hours_per_night: parseFloat(e.target.value) || 0 })
+                      setFormData({
+                        ...formData,
+                        sleep_hours_per_night: parseFloat(e.target.value) || 0,
+                      })
                     }
                     className={fieldClass}
                   />
@@ -350,7 +442,12 @@ export default function MainWrapper() {
                   <label className={labelClass}>Stress Level</label>
                   <select
                     value={formData.stress_level}
-                    onChange={(e) => setFormData({ ...formData, stress_level: e.target.value as any })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        stress_level: e.target.value as any,
+                      })
+                    }
                     className={fieldClass}
                   >
                     <option className="bg-[#0b0a1a]">Low</option>
@@ -360,7 +457,6 @@ export default function MainWrapper() {
                   </select>
                 </div>
 
-                {/* Emerald Green Button */}
                 <motion.button
                   whileHover={{ scale: 1.015 }}
                   whileTap={{ scale: 0.985 }}
@@ -401,8 +497,18 @@ export default function MainWrapper() {
 
                   <div className="mb-5 flex justify-center">
                     <div className="relative h-36 w-36">
-                      <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90 transform">
-                        <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="9" />
+                      <svg
+                        viewBox="0 0 100 100"
+                        className="h-full w-full -rotate-90 transform"
+                      >
+                        <circle
+                          cx="50"
+                          cy="50"
+                          r="45"
+                          fill="none"
+                          stroke="rgba(255,255,255,0.08)"
+                          strokeWidth="9"
+                        />
                         <circle
                           ref={gaugeGlowRef}
                           cx="50"
@@ -434,14 +540,18 @@ export default function MainWrapper() {
                         <span className={`text-3xl font-bold ${sc.text}`}>
                           {result.predicted_mental_health_score}
                         </span>
-                        <span className="text-[11px] uppercase tracking-wider text-slate-500">out of 10</span>
+                        <span className="text-[11px] uppercase tracking-wider text-slate-500">
+                          out of 10
+                        </span>
                       </div>
                     </div>
                   </div>
 
                   <div className="space-y-2 text-center">
-                    <p className={`text-lg font-medium ${sc.text}`}>{result.status}</p>
-                    <div className="text-left text-sm text-slate-400">
+                    <p className={`text-lg font-medium ${sc.text}`}>
+                      {result.status}
+                    </p>
+                    <div className="text-center text-sm text-slate-400">
                       <MessageContent text={result.recommendation} />
                     </div>
                   </div>
@@ -452,12 +562,18 @@ export default function MainWrapper() {
                         key={factor.label}
                         className="flex items-center gap-2.5 rounded-xl border border-white/5 bg-white/[0.03] p-3 ring-1 ring-inset ring-white/5"
                       >
-                        <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ring-1 ring-inset ${factor.color}`}>
+                        <span
+                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ring-1 ring-inset ${factor.color}`}
+                        >
                           <factor.icon className="h-4.5 w-4.5" />
                         </span>
                         <div className="min-w-0">
-                          <p className="truncate text-[11px] text-slate-500">{factor.label}</p>
-                          <p className="truncate text-sm font-medium text-slate-200">{factor.value}</p>
+                          <p className="truncate text-[11px] text-slate-500">
+                            {factor.label}
+                          </p>
+                          <p className="truncate text-sm font-medium text-slate-200">
+                            {factor.value}
+                          </p>
                         </div>
                       </div>
                     ))}

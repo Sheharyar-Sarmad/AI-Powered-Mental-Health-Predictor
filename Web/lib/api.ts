@@ -40,9 +40,11 @@ export const fetchGroqModels = async () => {
 };
 
 // Send a chat completion with a chosen model (dynamic)
+// UPDATED: Added optional 'signal' parameter for request cancellation
 export const sendGroqMessage = async (
   messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>,
-  model: string // now required – no default
+  model: string, // now required – no default
+  signal?: AbortSignal // <--- Added this line
 ) => {
   if (!GROQ_API_KEY) {
     throw new Error('NEXT_PUBLIC_GROQ_API_KEY is not set');
@@ -61,6 +63,7 @@ export const sendGroqMessage = async (
         'Authorization': `Bearer ${GROQ_API_KEY}`,
         'Content-Type': 'application/json',
       },
+      signal, // <--- Passed signal into Axios config
     }
   );
 
