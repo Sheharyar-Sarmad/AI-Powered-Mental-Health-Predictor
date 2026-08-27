@@ -21,10 +21,13 @@ type Message = {
 
 interface GroqChatWrapperProps {
   initialMessage?: string;
+  score?: number;
+  status?: string;
+  recommendation?: string;
 }
 
 const FALLBACK_MODELS = [
-  "llama-3.3-70b-versatile",
+  "openai/gpt-oss-120b",
   "openai/gpt-oss-20b",
   "llama-3.1-8b-instant",
 ];
@@ -41,6 +44,9 @@ const getTimeNow = () =>
 
 export default function GroqChatWrapper({
   initialMessage,
+  score,
+  status,
+  recommendation,
 }: GroqChatWrapperProps) {
   const [messages, setMessages] = useState<Message[]>(() =>
     initialMessage
@@ -168,8 +174,23 @@ export default function GroqChatWrapper({
 
     try {
       const cleanMessages = newMessages.map(({ role, content }) => ({ role, content }));
+
+      // 🔥 THE CRITICAL SYSTEM PROMPT LOGIC:
+      // If we have the score, inject a system message so the AI becomes context-aware.
+      const systemMessage = (score !== undefined && status && recommendation)
+        ? {
+            role: 'system' as const,
+            content: `You are a mental health assistant. The user's latest predicted mental health score is ${score}/10 (${status}). Their personalized recommendation was: "${recommendation}". Use this specific context to provide deeply personalized, empathetic, and actionable follow-up advice to the user's questions.`
+          }
+        : null;
+
+      // If we have a system message, put it at the start of the array!
+      const messagesToSend = systemMessage
+        ? [systemMessage, ...cleanMessages]
+        : cleanMessages;
+
       const reply = await sendGroqMessage(
-        cleanMessages,
+        messagesToSend,
         selectedModel,
         controllerRef.current?.signal as AbortSignal
       );
