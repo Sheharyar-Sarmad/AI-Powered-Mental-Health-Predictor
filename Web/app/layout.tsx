@@ -16,8 +16,8 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Mental Health Predictor",
     description: "AI-powered mental health insights",
-    images: ["/logo.png"], // No "public" prefix!
-    url: "https://ai-powered-mental-health-predictor.vercel.app", // Your REAL link
+    images: ["/logo.png"], 
+    url: "https://ai-powered-mental-health-predictor.vercel.app", 
     siteName: "Mental Health Predictor",
     type: "website",
   },
@@ -26,7 +26,6 @@ export const metadata: Metadata = {
     title: "Mental Health Predictor",
     description: "AI-powered mental health insights",
     images: ["/logo.png"],
-    url: "https://ai-powered-mental-health-predictor.vercel.app", // Added here for safety
   },
 };
 
