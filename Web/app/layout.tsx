@@ -13,6 +13,21 @@ const outfit = Outfit({
 export const metadata: Metadata = {
   title: "Mental Health Predictor",
   description: "AI-powered mental health insights",
+  openGraph: {
+    title: "Mental Health Predictor",
+    description: "AI-powered mental health insights",
+    images: ["/logo.png"], // No "public" prefix!
+    url: "https://ai-powered-mental-health-predictor.vercel.app", // Your REAL link
+    siteName: "Mental Health Predictor",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Mental Health Predictor",
+    description: "AI-powered mental health insights",
+    images: ["/logo.png"],
+    url: "https://ai-powered-mental-health-predictor.vercel.app", // Added here for safety
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
