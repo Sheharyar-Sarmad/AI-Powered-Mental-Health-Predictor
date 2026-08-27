@@ -171,7 +171,7 @@ python train_model.py
 **5. Run the backend server**
 
 ```bash
-python main.py
+uvicorn main:app --reload
 # API available at http://localhost:8000
 ```
 
