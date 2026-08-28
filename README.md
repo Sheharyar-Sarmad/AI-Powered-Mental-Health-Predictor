@@ -293,7 +293,7 @@ AI/ML Developer & Full Stack Enthusiast
 
 **Connect with me**
 - 💼 LinkedIn: Sheharyar Sarmad
-- 📧 Email: sheharyar.sarmad@example.com
+- 📧 Email: developersheharyar2010@gmail.com
 
 ---
 
